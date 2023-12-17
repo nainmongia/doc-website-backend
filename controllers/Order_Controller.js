@@ -122,7 +122,7 @@ const createNewOrder = async (req, res) => {
         billing_phone: result?.customer_phone_number,
         shipping_is_billing: true,
         order_items: newArray,
-        payment_method: "prepaid",
+        payment_method:req.body.tid == 'COD'? "cash on delivery" :"prepaid",
         sub_total: numericPrice,
         length: 10,
         breadth: 15,
@@ -137,7 +137,7 @@ const createNewOrder = async (req, res) => {
         maxBodyLength: Infinity,
       }
     );
-    console.log(shipping);
+    console.log("ship",shipping);
 
     if (shipping?.status !== parseInt(200)) {
       await create.delete();
@@ -226,7 +226,7 @@ const getAllOrdersByUserId = async (req, res) => {
     }
 
     const user = await Users_Schema.findById(userID);
-    console.log(user);
+    // console.log(user);
 
     if (!user) {
       return res.send({
@@ -297,7 +297,7 @@ const deleteOrderById = async (req, res) => {
   try {
     const orderId = req.params.id; // Assuming you pass the order ID as a route parameter
 
-    console.log("orderid ===============================>", orderId);
+    // console.log("orderid ===============================>", orderId);
 
     // Check if orderId is provided
     if (!orderId) {
