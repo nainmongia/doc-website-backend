@@ -24,7 +24,8 @@ const WholeSaleEnquiry_Routes = require("./routes/wholesale_enquiry_routes");
 const Brands_Routes = require("./routes/category_routes");
 const Coupon_Routes = require("./routes/coupon_routes");
 const Discount_Routes = require("./routes/discount_routes");
-
+const Blogs_Routes = require("./routes/blogs_routes");
+const Blogs_Category_Routes = require("./routes/blogs_category_routes");
 // App Routes
 
 // app.use(
@@ -57,7 +58,8 @@ app.use("/api", Brands_Routes);
 app.use("/api", Mobilebanners_Routes);
 app.use("/api", Discount_Routes);
 app.use("/api/coupon", Coupon_Routes);
-
+app.use("/api", Blogs_Routes);
+app.use("/api", Blogs_Category_Routes);
 // app.use("/api",UploadImage_Routes);
 
 app.get("/api/paymentKey/rezor", (req, res) => {

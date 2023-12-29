@@ -470,7 +470,7 @@ const newPayment = async (req, res) => {
       merchantUserId: req.body.tuid,
       name: req.body.name,
       amount: total,
-      redirectUrl: `https://shark-app-neruo.ondigitalocean.app/api/order/status/${merchantTransactionId}`,
+      redirectUrl: `https://coral-app-bxh4h.ondigitalocean.app/api/order/status/${merchantTransactionId}`,
     // redirectUrl: `http://localhost:5000/api/order/status/${merchantTransactionId}`,
       redirectMode: "POST",
       mobileNumber: req.body.number,
