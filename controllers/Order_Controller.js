@@ -22,6 +22,34 @@ const formatDate = (dateString) => {
   return `${year}-${formattedMonth}-${formattedDay}`;
 };
 
+const updateProductQuantities = async (cart) => {
+  try {
+    for (const cartItem of cart) {
+      const product = await Products_Schema.findOne({
+        _id: cartItem.productID,
+      });
+
+      if (product) {
+        // Check if there's enough quantity in stock
+        if (product.quantity < cartItem.cartQuantity) {
+          throw new Error(
+            `Not enough quantity in stock for product with ID: ${cartItem.productID}`
+          );
+        }
+
+        // Decrease the product quantity based on the quantity ordered
+        product.quantity -= cartItem.cartQuantity;
+
+        // Save the updated product to MongoDB
+        await product.save();
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    //  throw error; // Re-throw the error to be handled in the calling function (createNewOrder)
+  }
+};
+
 // create new order
 const createNewOrder = async (req, res) => {
   // console.log(req.body);
@@ -158,33 +186,7 @@ const createNewOrder = async (req, res) => {
   }
 };
 
-const updateProductQuantities = async (cart) => {
-  try {
-    for (const cartItem of cart) {
-      const product = await Products_Schema.findOne({
-        _id: cartItem.productID,
-      });
 
-      if (product) {
-        // Check if there's enough quantity in stock
-        if (product.quantity < cartItem.cartQuantity) {
-          throw new Error(
-            `Not enough quantity in stock for product with ID: ${cartItem.productID}`
-          );
-        }
-
-        // Decrease the product quantity based on the quantity ordered
-        product.quantity -= cartItem.cartQuantity;
-
-        // Save the updated product to MongoDB
-        await product.save();
-      }
-    }
-  } catch (error) {
-    console.log(error);
-    //  throw error; // Re-throw the error to be handled in the calling function (createNewOrder)
-  }
-};
 
 // get all orders
 const getAllOrders = async (req, res) => {
