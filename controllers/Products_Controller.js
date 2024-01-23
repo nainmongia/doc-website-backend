@@ -7,26 +7,28 @@ const Utils = require("../utils/Utils");
 const addReview = async (req, res) => {
   const { productId } = req.params;
   const { jwt } = req.cookies;
-
+  console.log("api called");
   try {
-    if (!jwt) {
-      return res.send({ message: "Please login" });
-    }
+    // if (!jwt) {
+    //   return res.send({ message: "Please login" });
+    // }
 
-    const userId = await Utils.verifying_Jwt(jwt, process.env.JWT_TOKEN_SECRET);
-    const { desc, rating, username } = req.body;
-
+    const { desc, rating, username, userid } = req.body;
+    const userId = userid;
+    // const userId = await Utils.verifying_Jwt(jwt, process.env.JWT_TOKEN_SECRET);
     const product = await Products_Schema.findById(productId);
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
+    const createdAt = new Date().toUTCString()?.slice(5, 16);
     const newReview = {
-      userID: userId?.id,
+      userID: userId,
       username: username || "user",
       desc,
       rating,
+      createdAt: createdAt,
     };
 
     product.review.push(newReview);
@@ -149,7 +151,7 @@ const createProducts = async (req, res) => {
 // get all products
 const getAllProductsAdmin = async (req, res) => {
   try {
-   // const { startIndex, endIndex, page } = req.pagination;
+    // const { startIndex, endIndex, page } = req.pagination;
     const getProductsCount = await Products_Schema.find({}).count();
     const categoryForFilter = await Brands_Schema.aggregate([
       { $group: { _id: "$main_category_name" } },
@@ -160,7 +162,7 @@ const getAllProductsAdmin = async (req, res) => {
     // console.log(endIndex);
     res.status(200).send({
       allProducts: allProducts,
-    //  page: page,
+      //  page: page,
       count: allProducts.length,
       getProductsCount: getProductsCount,
       getAllProductStatus: product_status,
@@ -183,14 +185,16 @@ const getAllProducts = async (req, res) => {
     ]);
     const all_category_for_filter = await Brands_Schema.find({});
     let allProducts;
-    if(parseInt(req.query.sort) === 0) {
-      allProducts = await Products_Schema.find({}).sort({ createdAt:-1 });
-    }
-    else if(parseInt(req.query.sort) === -1) {
-      allProducts = await Products_Schema.find({ }).sort({ product_sale_price :1 });
-    }
-    else if(parseInt(req.query.sort) === 1) {
-      allProducts = await Products_Schema.find({ }).sort({ product_sale_price: -1 });
+    if (parseInt(req.query.sort) === 0) {
+      allProducts = await Products_Schema.find({}).sort({ createdAt: -1 });
+    } else if (parseInt(req.query.sort) === -1) {
+      allProducts = await Products_Schema.find({}).sort({
+        product_sale_price: 1,
+      });
+    } else if (parseInt(req.query.sort) === 1) {
+      allProducts = await Products_Schema.find({}).sort({
+        product_sale_price: -1,
+      });
     }
     // const allProducts = await Products_Schema.find({}).sort({ createdAt: -1 });
     console.log(startIndex);
@@ -215,35 +219,64 @@ const getAllProductsFilter = async (req, res) => {
   try {
     const filter = req.query.filter;
     const { startIndex, endIndex, page } = req.pagination;
-    const getProductsCount = await Products_Schema.find({ product_brand:filter }).count();
+    const getProductsCount = await Products_Schema.find({
+      product_brand: filter,
+    }).count();
     const categoryForFilter = await Brands_Schema.aggregate([
       { $group: { _id: "$main_category_name" } },
     ]);
     const all_category_for_filter = await Brands_Schema.find({});
     var allProducts;
-    if(!parseInt(req.query.sort) && !parseInt(req.query.iscat)) {
-      allProducts = await Products_Schema.find({ product_brand:filter }).sort({ createdAt:-1 });
-    }
-    else if(!parseInt(req.query.sort) && parseInt(req.query.iscat) === 1) {
-      allProducts = await Products_Schema.find({ product_main_category:filter }).sort({ createdAt:-1 });
-    }
-    else if(parseInt(req.query.sort) === 0 && parseInt(req.query.iscat) !== 1 ) {
-      allProducts = await Products_Schema.find({ product_brand:filter }).sort({ createdAt:-1 });
-    }
-    else if(parseInt(req.query.sort) === -1 && parseInt(req.query.iscat) !== 1) {
-      allProducts = await Products_Schema.find({ product_brand:filter }).sort({ product_sale_price :1 });
-    }
-    else if(parseInt(req.query.sort) === 1 && parseInt(req.query.iscat) !== 1) {
-      allProducts = await Products_Schema.find({ product_brand:filter }).sort({ product_sale_price: -1 });
-    }
-    else if(parseInt(req.query.sort) === 1 && parseInt(req.query.iscat) === 1) {
-      allProducts = await Products_Schema.find({ product_main_category:filter }).sort({ product_sale_price: -1 });
-    }
-    else if(parseInt(req.query.sort) === -1 && parseInt(req.query.iscat) === 1) {
-      allProducts = await Products_Schema.find({ product_main_category:filter }).sort({ product_sale_price :1 });
-    }
-    else if(parseInt(req.query.sort) === 0 && parseInt(req.query.iscat) === 1) {
-      allProducts = await Products_Schema.find({ product_main_category:filter }).sort({ createdAt :1 });
+    if (!parseInt(req.query.sort) && !parseInt(req.query.iscat)) {
+      allProducts = await Products_Schema.find({ product_brand: filter }).sort({
+        createdAt: -1,
+      });
+    } else if (!parseInt(req.query.sort) && parseInt(req.query.iscat) === 1) {
+      allProducts = await Products_Schema.find({
+        product_main_category: filter,
+      }).sort({ createdAt: -1 });
+    } else if (
+      parseInt(req.query.sort) === 0 &&
+      parseInt(req.query.iscat) !== 1
+    ) {
+      allProducts = await Products_Schema.find({ product_brand: filter }).sort({
+        createdAt: -1,
+      });
+    } else if (
+      parseInt(req.query.sort) === -1 &&
+      parseInt(req.query.iscat) !== 1
+    ) {
+      allProducts = await Products_Schema.find({ product_brand: filter }).sort({
+        product_sale_price: 1,
+      });
+    } else if (
+      parseInt(req.query.sort) === 1 &&
+      parseInt(req.query.iscat) !== 1
+    ) {
+      allProducts = await Products_Schema.find({ product_brand: filter }).sort({
+        product_sale_price: -1,
+      });
+    } else if (
+      parseInt(req.query.sort) === 1 &&
+      parseInt(req.query.iscat) === 1
+    ) {
+      allProducts = await Products_Schema.find({
+        product_main_category: filter,
+      }).sort({ product_sale_price: -1 });
+    } else if (
+      parseInt(req.query.sort) === -1 &&
+      parseInt(req.query.iscat) === 1
+    ) {
+      allProducts = await Products_Schema.find({
+        product_main_category: filter,
+      }).sort({ product_sale_price: 1 });
+    } else if (
+      parseInt(req.query.sort) === 0 &&
+      parseInt(req.query.iscat) === 1
+    ) {
+      allProducts = await Products_Schema.find({
+        product_main_category: filter,
+      }).sort({ createdAt: 1 });
     }
     console.log(startIndex);
     console.log(endIndex);
@@ -261,7 +294,6 @@ const getAllProductsFilter = async (req, res) => {
     res.status(500).send("Something went wrong !!");
   }
 };
-
 
 // get product by id
 const getproductById = async (req, res) => {
@@ -320,7 +352,9 @@ const homeProducts = async (req, res) => {
       bdata.map(async (i) => {
         const pr = await Products_Schema.find({
           product_main_category: i.main_category_name,
-        }).sort({ createdAt: -1 }).limit(10);
+        })
+          .sort({ createdAt: -1 })
+          .limit(10);
         data.push(pr);
       })
     );
@@ -336,7 +370,7 @@ const homeProducts = async (req, res) => {
 const adminSearchProducts = async (req, res) => {
   const searchValue = req.query.search;
   //const { startIndex, endIndex, page } = req.pagination;
-//  console.log(searchValue);
+  //  console.log(searchValue);
   const searchRegex = Utils.createRegex(searchValue);
   console.log(searchRegex);
   let result;
@@ -370,7 +404,7 @@ const adminSearchProducts = async (req, res) => {
     // console.log(result);
     res.status(200).send({
       result: result,
-      count: result?.length
+      count: result?.length,
     });
   } catch (err) {
     console.log(err);
@@ -470,11 +504,12 @@ const searchProducts = async (req, res) => {
 
 // Filter for products table
 const filterProducts = async (req, res) => {
-  const { by_status, date_from, date_to, by_category, by_product_status } =
+  const { by_status, date_from, date_to, by_category, by_product_status,by_stock} =
     req.query;
-  let result;
-  //const { startIndex, endIndex } = req.pagination;
-  console.log("by_status,date_from,date_to", by_status, date_from, date_to);
+    let result;
+    //const { startIndex, endIndex } = req.pagination;
+    // console.log("by_status,date_from,date_to", by_status, date_from, date_to);
+    console.log("rahulstock",by_stock);
   try {
     const endDate = new Date(`${date_to}`);
     // seconds * minutes * hours * milliseconds = 1 day
@@ -524,6 +559,13 @@ const filterProducts = async (req, res) => {
     if (by_category != "all") {
       result = await Products_Schema.find({
         product_main_category: by_category,
+      }).sort({ createdAt: -1 });
+      return res.status(200).send(result);
+    }
+    if (by_stock == "true") {
+      console.log("out of stock");
+      result = await Products_Schema.find({
+        quantity: 0,
       }).sort({ createdAt: -1 });
       return res.status(200).send(result);
     }
@@ -592,7 +634,7 @@ const recommended = async (req, res) => {
       product_main_category: pr?.product_main_category,
     }).limit(10);
 
-     console.log(findResult);
+    console.log(findResult);
 
     return res.status(200).send({
       allProducts: findResult,
