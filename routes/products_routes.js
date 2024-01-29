@@ -49,6 +49,28 @@ router.get(
   paginationMiddleware(),
   Product_Controllers.searchProducts
 );
+
+// website search product with category
+router.get(
+  "/search/category/wise/products",
+  paginationMiddleware(),
+  Product_Controllers.searchProductsWithCategoryName
+);
+
+// website search product with  sub category
+router.get(
+  "/search/sub/category/wise/products",
+  paginationMiddleware(),
+  Product_Controllers.searchProductsWithSubCategoryName
+);
+
+// website search product with brands
+router.get(
+  "/search/brands/wise/products",
+  paginationMiddleware(),
+  Product_Controllers.searchProductsWithBrandName
+);
+
 router.patch("/edit/product/:product_id", Product_Controllers.editProduct);
 router.patch(
   "/remove/product/image/:product_id/:product_image",

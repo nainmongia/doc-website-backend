@@ -86,6 +86,7 @@ const createNewOrder = async (req, res) => {
       tid: req.body.tid,
       customer_name: req.body.customer_name,
       total_amount: req.body.total_amount,
+      delivery_charges: req.body?.delivery_charges,
       customer_email: req.body.customer_email?.toLowerCase(),
       order_status: "pending",
       products: req.body.products,
@@ -189,20 +190,165 @@ const createNewOrder = async (req, res) => {
 
 
 // get all orders
-const getAllOrders = async (req, res) => {
-  try {
-    const ordersCount = await Orders_Schema.find({}).count();
-    const allOrders = await Orders_Schema.find({}).sort({ createdAt: -1 });
-    res.status(200).send({
-      allOrders: allOrders,
-      ordersCount: ordersCount,
-      order_status: order_status,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("something went wrong !!");
-  }
-};
+// const getAllOrders = async (req, res) => {
+//   try {
+//     const ordersCount = await Orders_Schema.find({}).count();
+//     const allOrders = await Orders_Schema.find({}).sort({ createdAt: -1 });
+//     res.status(200).send({
+//       allOrders: allOrders,
+//       ordersCount: ordersCount,
+//       order_status: order_status,
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).send("something went wrong !!");
+//   }
+// };
+
+// get all orders 
+const getAllOrders = async(req,res)=>{
+  const {by_status,date_from,date_to,recentDays} = req.query
+  const searchValue = req.query.search
+  const searchRegex = Utils.createRegex(searchValue);
+  const limit  = req.query.limit  || 25; 
+  const page  = req.query.page; 
+  let result;
+  let count;
+      try{
+          // ========== FILTER BY ORDER STATUS / FILTER BY RECENT ORDERS =============
+           // console.log("date====",Utils.convertDate(date_from),"-----",Utils.convertDate(date_to))
+      const endDate = new Date(`${date_to}`);
+      // seconds * minutes * hours * milliseconds = 1 day 
+      const dayTime = 60 * 60 * 24 * 1000;
+      let increaseEndDateByOne = new Date(endDate.getTime() + dayTime);
+      // console.log("INCREASED DATE",increaseEndDateByOne)
+
+
+              // filter orders by todays date and by their status 
+
+      if(date_from && date_to && by_status ){ 
+          if(by_status!= 'all'){
+              //  user_status = by_status == 'verified' ? true : false
+              result = await Orders_Schema.aggregate([{
+                  $match:{
+                  order_status:by_status,
+                  createdAt:{
+                      $lte:Utils.convertDate(increaseEndDateByOne),
+                      $gte:Utils.convertDate(date_from)
+                  }
+              },
+          },{$sort:{createdAt:-1}}, {$skip: (page - 1) * limit },
+          {$limit: limit } ],)
+              count = await Orders_Schema.aggregate([{
+                  $match:{
+                  order_status:by_status,
+                  createdAt:{
+                      $lte:Utils.convertDate(increaseEndDateByOne),
+                      $gte:Utils.convertDate(date_from)
+                  }
+              },
+          },{$count:'order_count'}],)
+          // console.log("RESULT NEW----",result)
+          return res.status(200).send({allOrders:result,pages:Math.ceil(count[0]?.order_count / limit),ordersCount:count[0]?.order_count,order_status:order_status});
+
+          }
+      }
+          else{
+              result = await Orders_Schema.find({order_status:by_status}).sort({createdAt:-1})
+              // return res.status(200).send(result)
+
+          }
+
+
+      if(date_from && date_to){
+          result = await Orders_Schema.aggregate([{
+                              $match:{
+                              createdAt:{
+                                  $lte:Utils.convertDate(increaseEndDateByOne),
+                                  $gte:Utils.convertDate(date_from)
+                              }
+                          },
+                      },{$sort:{createdAt:-1}}, {$skip: (page - 1) * limit },
+                      {$limit: limit } ],)
+              count = await Orders_Schema.aggregate([{
+                          $match:{
+                          createdAt:{
+                              $lte:Utils.convertDate(increaseEndDateByOne),
+                              $gte:Utils.convertDate(date_from)
+                          }
+                      },
+                  },{$count:'order_count'}],)
+                  // console.log("RESULT NEW----",result)
+                  return res.status(200).send({allOrders:result,pages:Math.ceil(count[0]?.order_count / limit),ordersCount:count[0]?.order_count,order_status:order_status});
+
+           }
+      if(by_status !="all" ){
+              // let user_status = by_status === 'verified' ? true : false
+              result = await Orders_Schema.find({order_status:by_status})
+                  .sort({createdAt:-1})
+                  .limit(limit)
+                  .skip((page - 1) * limit);
+              count = await Orders_Schema.find({order_status:by_status}).count();
+              // console.log("RESULT NEW----",result)
+
+              return res.status(200).send({allOrders:result,pages:Math.ceil(count / limit),ordersCount:count,order_status:order_status});
+
+      }
+   
+          // ========== FILTER BY ORDER STATUS / FILTER BY RECENT ORDERS ============= 
+
+          // ========= SEARCH IN ORDERS ========
+          if(searchValue){
+              result = await Orders_Schema.find({order_id:{$regex:searchRegex}})
+                              .sort({createdAt:-1})
+                              .limit(limit)
+                              .skip((page - 1) * limit);
+              count = await Orders_Schema.find({order_id:{$regex:searchRegex}}).count();
+              
+              if(!result.length > 0){
+                  result = await Orders_Schema.find({customer_name:{$regex:searchRegex}})
+                          .sort({createdAt:-1})
+                          .limit(limit)
+                          .skip((page - 1) * limit);
+                  count = await Orders_Schema.find({customer_name:{$regex:searchRegex}}).count();
+
+
+              }
+              const numberField = parseInt(searchValue)
+              // console.log(numberField)
+              if (numberField) {
+                  // console.log(numberField)
+                  result =  await Orders_Schema.find({ 
+                      customer_phone_number:numberField
+                   }).sort({createdAt:-1})
+                   .limit(limit)
+                   .skip((page - 1) * limit);
+                  count = await Orders_Schema.find({ customer_phone_number:numberField}).count();
+
+                   return res.status(200).send({allOrders:result,pages:Math.ceil(count / limit),ordersCount:count,order_status:order_status});
+              }
+              return res.status(200).send({allOrders:result,pages:Math.ceil(count / limit),ordersCount:count,order_status:order_status});
+
+          }
+          // ========= SEARCH IN ORDERS ========
+
+          // ======= ALL ORDERS ===========
+          result = await Orders_Schema.find({})
+          .sort({createdAt:-1})
+          .limit(limit)
+          .skip((page - 1) * limit);
+          count = await Orders_Schema.find({}).count();
+          res.status(200).send({allOrders:result,pages:Math.ceil(count / limit),ordersCount:count,order_status:order_status});
+          // ======= ALL ORDERS ===========
+
+      }
+      catch(err){
+          console.log(err)
+          res.status(500).send("something went wrong !!")
+      }
+}
+
+
 
 // get all orders
 const getAllOrdersByUserId = async (req, res) => {

@@ -17,6 +17,9 @@ const Order_Schema = new mongoose.Schema(
       required: true,
       default: "-",
     },
+    delivery_charges: {
+      type: String,
+    },
     razorpay_payment_id: {
       type: String,
       // required: true,
