@@ -547,28 +547,28 @@ const adminSearchProducts = async (req, res) => {
   try {
     result = await Products_Schema.find({
       product_brand: { $regex: searchRegex },
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_main_category: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_name: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_code: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
 
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_subcategory: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
 
     // console.log(result);
@@ -593,28 +593,28 @@ const searchProducts = async (req, res) => {
   try {
     result = await Products_Schema.find({
       product_brand: { $regex: searchRegex },
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_main_category: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_name: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_code: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
 
     if (!result.length > 0) {
       result = await Products_Schema.find({
         product_subcategory: { $regex: searchRegex },
-      }).sort({ createdAt: -1 });
+      }).sort({ createdAt: 1 });
     }
 
     // console.log(result);
